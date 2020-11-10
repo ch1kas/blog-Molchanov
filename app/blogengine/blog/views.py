@@ -7,11 +7,20 @@ from .models import Post, Tag
 from .utils import *
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
+from django.db.models import Q
 
 def posts_list(request):
-    posts = Post.objects.all()
-    paginator = Paginator(posts, 1)
+    search_query = request.GET.get('search', '')
+
+    if search_query:
+        posts = Post.objects.filter(Q(title__icontains=search_query) | Q(body__icontains=search_query))
+    else:
+        posts = Post.objects.all()
+
+
+    paginator = Paginator(posts, 10)
     page_number = request.GET.get('page', 1)
+
     page = paginator.get_page(page_number)
 
     is_paginated = page.has_other_pages()
@@ -59,7 +68,7 @@ class PostDelete(LoginRequiredMixin, ObjectDeleteMixin, View):
 
 class TagDetail(ObjectDetailMixin, View):
     model = Tag
-    template = 'blog/tags_list.html'
+    template = 'blog/tag_detail.html'
 
 class TagCreate(LoginRequiredMixin, ObjectCreateMixin, View):
     model_form = TagForm
